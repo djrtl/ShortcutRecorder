@@ -9,10 +9,9 @@
 #import <Cocoa/Cocoa.h>
 
 @interface PTKeyCombo : NSObject <NSCopying>
-{
-	NSInteger	mKeyCode;
-	NSUInteger	mModifiers;
-}
+
+@property (readonly) NSInteger keyCode;
+@property (readonly) NSUInteger modifiers;
 
 + (id)clearKeyCombo;
 + (id)keyComboWithKeyCode: (NSInteger)keyCode modifiers: (NSUInteger)modifiers;
@@ -22,9 +21,6 @@
 - (id)plistRepresentation;
 
 - (BOOL)isEqual: (PTKeyCombo*)combo;
-
-- (NSInteger)keyCode;
-- (NSUInteger)modifiers;
 
 - (BOOL)isClearCombo;
 - (BOOL)isValidHotKeyCombo;

@@ -46,111 +46,26 @@
 
 #pragma mark -
 
-- (void)setIdentifier: (id)ident
-{
-    mIdentifier = ident;
-}
-
-- (id)identifier
-{
-    return mIdentifier;
-}
-
 - (void)setKeyCombo: (PTKeyCombo*)combo
 {
     if( combo == nil )
         combo = [PTKeyCombo clearKeyCombo];
 
-    mKeyCombo = combo;
-}
-
-- (PTKeyCombo*)keyCombo
-{
-    return mKeyCombo;
-}
-
-- (void)setName: (NSString*)name
-{
-    mName = name;
-}
-
-- (NSString*)name
-{
-    return mName;
-}
-
-- (void)setTarget: (id)target
-{
-    mTarget = target;
-}
-
-- (id)target
-{
-    return mTarget;
-}
-
-- (void)setObject:(id)object
-{
-    mObject = object;
-}
-
-- (id)object
-{
-    return mObject;
-}
-
-- (void)setAction: (SEL)action
-{
-    mAction = action;
-}
-
-- (SEL)action
-{
-    return mAction;
-}
-
-- (void)setKeyUpAction: (SEL)action
-{
-    mKeyUpAction = action;
-}
-
-- (SEL)keyUpAction
-{
-    return mKeyUpAction;
-}
-
-- (UInt32)carbonHotKeyID
-{
-    return mCarbonHotKeyID;
-}
-
-- (void)setCarbonHotKeyID: (UInt32)hotKeyID;
-{
-    mCarbonHotKeyID = hotKeyID;
-}
-
-- (EventHotKeyRef)carbonEventHotKeyRef
-{
-    return mCarbonEventHotKeyRef;
-}
-
-- (void)setCarbonEventHotKeyRef: (EventHotKeyRef)hotKeyRef
-{
-    mCarbonEventHotKeyRef = hotKeyRef;
+    _keyCombo = combo;
 }
 
 #pragma mark -
 
 - (void)invoke
 {
-    if(mAction)
-        [NSApp sendAction:mAction to:mTarget from:self];
+    if(self.action)
+        [NSApp sendAction:self.action to:self.target from:self];
 }
 
 - (void)uninvoke
 {
-    if(mKeyUpAction)
-        [NSApp sendAction:mKeyUpAction to:mTarget from:self];
+    if(self.keyUpAction)
+        [NSApp sendAction:self.keyUpAction to:self.target from:self];
 }
 
 @end

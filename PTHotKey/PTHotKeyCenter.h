@@ -17,13 +17,6 @@
 @class PTHotKey;
 
 @interface PTHotKeyCenter : NSObject
-{
-	NSMutableDictionary*	mHotKeys; //Keys are carbon hot key IDs
-	BOOL					mEventHandlerInstalled;
-	UInt32					mHotKeyCount; // Used to assign new hot key ID
-    BOOL                    mIsPaused;
-    EventHandlerRef         mEventHandler;
-}
 
 + (PTHotKeyCenter *)sharedCenter;
 

@@ -8,8 +8,13 @@
 
 #import "PTKeyCodeTranslator.h"
 
-
 @implementation PTKeyCodeTranslator
+{
+    TISInputSourceRef keyboardLayout;
+    const UCKeyboardLayout	*uchrData;
+    UInt32		keyTranslateState;
+    UInt32		deadKeyState;
+}
 
 + (id)currentTranslator
 {
@@ -18,7 +23,7 @@
 
     if (current == nil) {
         current = [[PTKeyCodeTranslator alloc] initWithKeyboardLayout:currentLayout];
-    } else if ([current keyboardLayout] != currentLayout) {
+    } else if (current->keyboardLayout != currentLayout) {
         current = [[PTKeyCodeTranslator alloc] initWithKeyboardLayout:currentLayout];
     }
 
@@ -51,10 +56,6 @@
     UniChar unicodeString[4];
     UCKeyTranslate( uchrData, keyCode, kUCKeyActionDisplay, 0, LMGetKbdType(), kUCKeyTranslateNoDeadKeysBit, &deadKeyState, maxStringLength, &actualStringLength, unicodeString );
     return [NSString stringWithCharacters:unicodeString length:1];
-}
-
-- (TISInputSourceRef)keyboardLayout {
-    return keyboardLayout;
 }
 
 - (NSString *)description {

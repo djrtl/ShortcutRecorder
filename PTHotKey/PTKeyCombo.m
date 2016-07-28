@@ -10,6 +10,8 @@
 #import "PTKeyCodeTranslator.h"
 
 @implementation PTKeyCombo
+@synthesize keyCode = _keyCode;
+@synthesize modifiers = _modifiers;
 
 + (id)clearKeyCombo
 {
@@ -49,14 +51,14 @@
             case kVK_F18:
             case kVK_F19:
             case kVK_F20:
-                mModifiers = modifiers | NSFunctionKeyMask;
+                _modifiers = modifiers | NSFunctionKeyMask;
                 break;
             default:
-                mModifiers = modifiers;
+                _modifiers = modifiers;
                 break;
         }
 
-		mKeyCode = keyCode;
+		_keyCode = keyCode;
 	}
 
 	return self;
@@ -104,24 +106,14 @@
 
 #pragma mark -
 
-- (NSInteger)keyCode
-{
-	return mKeyCode;
-}
-
-- (NSUInteger)modifiers
-{
-	return mModifiers;
-}
-
 - (BOOL)isValidHotKeyCombo
 {
-	return mKeyCode >= 0 && mModifiers > 0;
+	return self.keyCode >= 0 && self.modifiers > 0;
 }
 
 - (BOOL)isClearCombo
 {
-	return mKeyCode == -1 && mModifiers == 0;
+	return self.keyCode == -1 && self.modifiers == 0;
 }
 
 @end

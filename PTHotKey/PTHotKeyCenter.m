@@ -10,7 +10,15 @@
 #import "PTHotKey.h"
 #import "PTKeyCombo.h"
 
-@interface PTHotKeyCenter (Private)
+@interface PTHotKeyCenter ()
+
+// Keys are carbon hot key IDs
+@property (strong) NSMutableDictionary* hotKeys;
+@property (assign) UInt32 nextHotKeyId;
+@property (assign, getter=isPaused) BOOL paused;
+@property (assign) EventHandlerRef eventHandler;
+@property (assign, getter=isEventHandlerInstalled) BOOL eventHandlerInstalled;
+
 - (PTHotKey*)_hotKeyForCarbonHotKey: (EventHotKeyRef)carbonHotKey;
 - (PTHotKey*)_hotKeyForCarbonHotKeyID: (EventHotKeyID)hotKeyID;
 
@@ -22,14 +30,13 @@ static OSStatus hotKeyEventHandler(EventHandlerCallRef inHandlerRef, EventRef in
 
 @implementation PTHotKeyCenter
 
-static PTHotKeyCenter *_sharedHotKeyCenter = nil;
-
 + (PTHotKeyCenter*)sharedCenter
 {
-	if( _sharedHotKeyCenter == nil )
-	{
-		_sharedHotKeyCenter = [[self alloc] init];
-	}
+    static PTHotKeyCenter* _sharedHotKeyCenter;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _sharedHotKeyCenter = [[self alloc] init];
+    });
 
 	return _sharedHotKeyCenter;
 }
@@ -40,7 +47,7 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
 
 	if( self )
 	{
-		mHotKeys = [[NSMutableDictionary alloc] init];
+		_hotKeys = [[NSMutableDictionary alloc] init];
 	}
 
 	return self;
@@ -51,7 +58,7 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
 
 - (BOOL)registerHotKey: (PTHotKey*)hotKey
 {
-    if ( mIsPaused == NO )
+    if (![self isPaused])
     {
         OSStatus err;
         EventHotKeyID hotKeyID;
@@ -64,7 +71,7 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
             return YES;
 
         hotKeyID.signature = 'PTHk';
-        hotKeyID.id = ++mHotKeyCount;
+        hotKeyID.id = ++self.nextHotKeyId;
 
         err = RegisterEventHotKey(  (SInt32)[[hotKey keyCombo] keyCode],
                                     (UInt32)[[hotKey keyCombo] modifiers],
@@ -80,24 +87,24 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
         [hotKey setCarbonEventHotKeyRef:carbonHotKey];
 
         if( hotKey )
-            [mHotKeys setObject: hotKey forKey: [NSNumber numberWithInteger:hotKeyID.id]];
+            [self.hotKeys setObject: hotKey forKey: [NSNumber numberWithInteger:hotKeyID.id]];
 
         [self _updateEventHandler];
     }
     else
     {
-        EventHotKeyID hotKeyID = {'PTHk', ++mHotKeyCount};
+        EventHotKeyID hotKeyID = {'PTHk', ++self.nextHotKeyId};
         [hotKey setCarbonHotKeyID:hotKeyID.id];
 
         if( hotKey )
-            [mHotKeys setObject: hotKey forKey: [NSNumber numberWithInteger:hotKeyID.id]];
+            [self.hotKeys setObject: hotKey forKey: [NSNumber numberWithInteger:hotKeyID.id]];
     }
     return YES;
 }
 
 - (void)unregisterHotKey: (PTHotKey*)hotKey
 {
-    if ( mIsPaused == NO )
+    if (![self isPaused] )
     {
         EventHotKeyRef carbonHotKey;
 
@@ -111,7 +118,7 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
             UnregisterEventHotKey( carbonHotKey );
             //Watch as we ignore 'err':
 
-            [mHotKeys removeObjectForKey: [NSNumber numberWithInteger:[hotKey carbonHotKeyID]]];
+            [self.hotKeys removeObjectForKey: [NSNumber numberWithInteger:[hotKey carbonHotKeyID]]];
 
             [hotKey setCarbonHotKeyID:0];
             [hotKey setCarbonEventHotKeyRef:NULL];
@@ -123,7 +130,7 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
     }
     else
     {
-        [mHotKeys removeObjectForKey: [NSNumber numberWithInteger:[hotKey carbonHotKeyID]]];
+        [self.hotKeys removeObjectForKey: [NSNumber numberWithInteger:[hotKey carbonHotKeyID]]];
 
         [hotKey setCarbonHotKeyID:0];
         [hotKey setCarbonEventHotKeyRef:NULL];
@@ -132,7 +139,7 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
 
 - (NSArray*)allHotKeys
 {
-	return [mHotKeys allValues];
+	return [self.hotKeys allValues];
 }
 
 - (PTHotKey*)hotKeyWithIdentifier: (id)ident
@@ -156,7 +163,7 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
 
 - (PTHotKey*)_hotKeyForCarbonHotKey: (EventHotKeyRef)carbonHotKeyRef
 {
-	NSEnumerator *e = [mHotKeys objectEnumerator];
+	NSEnumerator *e = [self.hotKeys objectEnumerator];
 	PTHotKey *hotkey = nil;
 
 	while( (hotkey = [e nextObject]) )
@@ -170,23 +177,24 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
 
 - (PTHotKey*)_hotKeyForCarbonHotKeyID: (EventHotKeyID)hotKeyID
 {
-	return [mHotKeys objectForKey:[NSNumber numberWithInteger:hotKeyID.id]];
+	return [self.hotKeys objectForKey:[NSNumber numberWithInteger:hotKeyID.id]];
 }
 
 - (void)_updateEventHandler
 {
-	if( [mHotKeys count] && mEventHandlerInstalled == NO )
+	if( [self.hotKeys count] && ![self isEventHandlerInstalled] )
 	{
 		EventTypeSpec eventSpec[2] = {
 			{ kEventClassKeyboard, kEventHotKeyPressed },
 			{ kEventClassKeyboard, kEventHotKeyReleased }
 		};
 
+        EventHandlerRef eventHandler = self.eventHandler;
 		InstallEventHandler( GetEventDispatcherTarget(),
 							 (EventHandlerProcPtr)hotKeyEventHandler,
-							 2, eventSpec, nil, &mEventHandler);
+							 2, eventSpec, nil, &eventHandler);
 
-		mEventHandlerInstalled = YES;
+		self.eventHandlerInstalled = YES;
 	}
 }
 
@@ -278,34 +286,34 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
 
 - (void)pause
 {
-    if ( mIsPaused )
+    if ([self isPaused])
         return;
 
-    mIsPaused = YES;
-    for (NSNumber *hotKeyID in mHotKeys)
+    self.paused = YES;
+    for (NSNumber *hotKeyID in self.hotKeys)
     {
-        PTHotKey *hotKey = [mHotKeys objectForKey:hotKeyID];
+        PTHotKey *hotKey = [self.hotKeys objectForKey:hotKeyID];
         EventHotKeyRef carbonHotKey = [hotKey carbonEventHotKeyRef];
         UnregisterEventHotKey( carbonHotKey );
         [hotKey setCarbonEventHotKeyRef:NULL];
     }
-    if (mEventHandler != NULL)
+    if (self.eventHandler != NULL)
     {
-        RemoveEventHandler(mEventHandler);
-        mEventHandler = NULL;
-        mEventHandlerInstalled = NO;
+        RemoveEventHandler(self.eventHandler);
+        self.eventHandler = NULL;
+        self.eventHandlerInstalled = NO;
     }
 }
 
 - (void)resume
 {
-    if ( mIsPaused == NO)
+    if (![self isPaused])
         return;
 
-    mIsPaused = NO;
-    for (NSNumber *hotKeyIDNumber in mHotKeys)
+    self.paused = NO;
+    for (NSNumber *hotKeyIDNumber in self.hotKeys)
     {
-        PTHotKey *hotKey = [mHotKeys objectForKey:hotKeyIDNumber];
+        PTHotKey *hotKey = [self.hotKeys objectForKey:hotKeyIDNumber];
         EventHotKeyRef carbonHotKey = NULL;
         EventHotKeyID hotKeyID;
         hotKeyID.signature = 'PTHk';
@@ -319,11 +327,6 @@ static PTHotKeyCenter *_sharedHotKeyCenter = nil;
         [hotKey setCarbonEventHotKeyRef:carbonHotKey];
     }
     [self _updateEventHandler];
-}
-
-- (BOOL)isPaused
-{
-    return mIsPaused;
 }
 
 static OSStatus hotKeyEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void* refCon )

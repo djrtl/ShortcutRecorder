@@ -13,46 +13,20 @@
 #import "PTKeyCombo.h"
 
 @interface PTHotKey : NSObject
-{
-	NSString*		mIdentifier;
-	NSString*		mName;
-	PTKeyCombo*		mKeyCombo;
-	id				mTarget;
-    id              mObject;
-	SEL				mAction;
-    SEL             mKeyUpAction;
 
-	UInt32		    mCarbonHotKeyID;
-	EventHotKeyRef	mCarbonEventHotKeyRef;
-}
+@property (copy) NSString* identifier;
+@property (copy) NSString* name;
+@property (copy) PTKeyCombo* keyCombo;
+@property (assign) id target;
+@property (assign) id object;
+@property (assign) SEL action;
+@property (assign) SEL keyUpAction;
+@property (assign) UInt32 carbonHotKeyID;
+@property (assign) EventHotKeyRef carbonEventHotKeyRef;
 
 - (id)initWithIdentifier: (id)identifier keyCombo: (PTKeyCombo*)combo;
 - (id)initWithIdentifier: (id)identifier keyCombo: (PTKeyCombo*)combo withObject: (id)object;
 - (id)init;
-
-- (void)setIdentifier: (id)ident;
-- (id)identifier;
-
-- (void)setName: (NSString*)name;
-- (NSString*)name;
-
-- (void)setKeyCombo: (PTKeyCombo*)combo;
-- (PTKeyCombo*)keyCombo;
-
-- (void)setTarget: (id)target;
-- (id)target;
-- (void)setObject: (id)object;
-- (id)object;
-- (void)setAction: (SEL)action;
-- (SEL)action;
-- (void)setKeyUpAction: (SEL)action;
-- (SEL)keyUpAction;
-
-- (UInt32)carbonHotKeyID;
-- (void)setCarbonHotKeyID: (UInt32)hotKeyID;
-
-- (EventHotKeyRef)carbonEventHotKeyRef;
-- (void)setCarbonEventHotKeyRef:(EventHotKeyRef)hotKeyRef;
 
 - (void)invoke;
 - (void)uninvoke;
