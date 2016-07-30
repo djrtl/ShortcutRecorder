@@ -51,7 +51,7 @@
     if( combo == nil )
         combo = [PTKeyCombo clearKeyCombo];
 
-    _keyCombo = combo;
+    _keyCombo = [combo copy];
 }
 
 #pragma mark -
