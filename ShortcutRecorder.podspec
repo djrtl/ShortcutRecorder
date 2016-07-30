@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
 
   s.subspec 'PTHotKey' do |hotkey|
     hotkey.source_files = 'PTHotKey/*.{h,m}'
-    hotkey.requires_arc = false
+    hotkey.requires_arc = true
     hotkey.dependency 'ShortcutRecorder/Core'
   end
 end
