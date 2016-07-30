@@ -9,13 +9,17 @@
 #import "PTKeyCombo.h"
 #import "PTKeyCodeTranslator.h"
 
+static const NSInteger kClearKeyCode = -1;
+static const NSUInteger kClearKeyModifiers = 0;
+
 @implementation PTKeyCombo
 @synthesize keyCode = _keyCode;
 @synthesize modifiers = _modifiers;
 
 + (id)clearKeyCombo
 {
-	return [self keyComboWithKeyCode: -1 modifiers: -1];
+	return [self keyComboWithKeyCode:kClearKeyCode
+                           modifiers:kClearKeyModifiers];
 }
 
 + (id)keyComboWithKeyCode: (NSInteger)keyCode modifiers: (NSUInteger)modifiers
@@ -113,7 +117,7 @@
 
 - (BOOL)isClearCombo
 {
-	return self.keyCode == -1 && self.modifiers == 0;
+	return self.keyCode == kClearKeyCode && self.modifiers == kClearKeyModifiers;
 }
 
 @end
